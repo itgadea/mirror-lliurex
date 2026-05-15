@@ -1,0 +1,1 @@
+0 2 * * * cd /home/YOUR_USER/mirror-lliurex && docker compose run --rm apt-mirror >> /var/log/mirror-lliurex.log 2>&1

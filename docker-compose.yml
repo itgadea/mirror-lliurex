@@ -1,0 +1,21 @@
+services:
+  apt-mirror:
+    image: ubuntu:24.04
+    container_name: apt-mirror
+    volumes:
+      - ./mirror-data:/var/spool/apt-mirror
+      - ./config/mirror.list:/etc/apt/mirror.list:ro
+    command: >
+      bash -c "apt-get update -qq &&
+               apt-get install -y -qq apt-mirror &&
+               apt-mirror"
+    restart: "no"
+
+  nginx:
+    image: nginx:alpine
+    container_name: mirror-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./mirror-data/mirror:/usr/share/nginx/html:ro
+    restart: unless-stopped
