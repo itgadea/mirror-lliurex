@@ -1,21 +1,41 @@
 services:
+
+  # ─────────────────────────────────────────────
+  # Sincronizador — se ejecuta y termina
+  # Lanzar manualmente o via cron del host
+  # ─────────────────────────────────────────────
   apt-mirror:
     image: ubuntu:24.04
     container_name: apt-mirror
     volumes:
       - ./mirror-data:/var/spool/apt-mirror
       - ./config/mirror.list:/etc/apt/mirror.list:ro
+      - ./logs:/var/log/apt-mirror
     command: >
-      bash -c "apt-get update -qq &&
-               apt-get install -y -qq apt-mirror &&
-               apt-mirror"
+      bash -c "
+        apt-get update -qq &&
+        apt-get install -y -qq apt-mirror &&
+        apt-mirror 2>&1 | tee /var/log/apt-mirror/sync.log
+      "
     restart: "no"
+    networks:
+      - mirror-net
 
+  # ─────────────────────────────────────────────
+  # Servidor web — siempre activo
+  # ─────────────────────────────────────────────
   nginx:
     image: nginx:alpine
     container_name: mirror-nginx
     ports:
-      - "80:80"
+      - "8080:80"        # Cambia 8080 si prefieres otro puerto
     volumes:
       - ./mirror-data/mirror:/usr/share/nginx/html:ro
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
+    networks:
+      - mirror-net
+
+networks:
+  mirror-net:
+    driver: bridge
